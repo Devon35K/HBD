@@ -1,0 +1,1336 @@
+/* receiver styles (v2). Loaded after style.css, so rules here win on equal specificity. */
+
+#receiver-view.rcv {
+    --rcv-paper: #fff8f2;
+    --rcv-paper-edge: #f3e3d6;
+    --rcv-ink: #3a1e2a;
+    --rcv-ink-soft: #6e4b59;
+    --rcv-hair: rgba(58, 30, 42, 0.12);
+    --rcv-gold-1: #fbe39a;
+    --rcv-gold-2: #e0ad35;
+    --rcv-gold-ink: #3b2600;
+    --rcv-accent-ink: #9b2f55;
+    --rcv-hud-bg: rgba(14, 9, 20, 0.78);
+    --rcv-hud-line: rgba(255, 255, 255, 0.16);
+    /* Chrome over the 3D stage. These are the night values; light backdrops
+       override them below (data-backdrop is set by viewer.js). */
+    --rcv-hud-ink: #fff;
+    --rcv-hud-ink-dim: rgba(255, 255, 255, 0.6);
+    --rcv-hud-hover: rgba(40, 26, 50, 0.9);
+    --rcv-title-ink: #fff;
+    --rcv-title-hl: var(--rcv-gold-1);
+    --rcv-title-shadow: 0 2px 18px rgba(0, 0, 0, 0.65);
+    --rcv-wish-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+    --rcv-hud-accent: var(--rcv-gold-1);
+    --rcv-count-bg: rgba(251, 227, 154, 0.16);
+    --rcv-link-bg: rgba(14, 9, 20, 0.55);
+    --rcv-meter-track: rgba(255, 255, 255, 0.18);
+    --rcv-breath: rgba(251, 227, 154, 0.85);
+    --rcv-breath-glow: rgba(251, 227, 154, 0.45);
+    --rcv-focus: var(--rcv-gold-1);
+    --rcv-shadow-rgb: 0, 0, 0;
+    --rcv-surface: var(--bg-gradient);
+    --rcv-veil: rgba(8, 4, 12, 0.88);
+    --rcv-safe-b: env(safe-area-inset-bottom, 0px);
+    --rcv-safe-t: env(safe-area-inset-top, 0px);
+    height: 100vh;
+    height: 100dvh;
+    background: var(--rcv-surface);
+    font-family: var(--font-primary);
+    color: var(--text-main);
+}
+
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+    #receiver-view.rcv {
+        /* The theme accent, darkened until it reads on warm paper (>= 4.5:1). */
+        --rcv-accent-ink: color-mix(in srgb, var(--primary-color) 45%, #3a1e2a);
+    }
+}
+
+.rcv .rcv-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.rcv button { font-family: inherit; }
+.rcv :focus-visible {
+    outline: 3px solid var(--rcv-focus);
+    outline-offset: 3px;
+}
+
+/* ---------- Language ---------- */
+.rcv-lang {
+    position: absolute;
+    top: calc(12px + var(--rcv-safe-t));
+    left: 12px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 10px 0 12px;
+    border-radius: 22px;
+    background: var(--rcv-hud-bg);
+    border: 1px solid var(--rcv-hud-line);
+    color: var(--rcv-hud-ink);
+    font-size: 0.85rem;
+}
+.rcv-lang-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font: 600 0.9rem var(--font-primary);
+    min-height: 40px;
+    padding: 0 4px;
+    cursor: pointer;
+}
+.rcv-lang-select option { color: #222; }
+
+/* ---------- Gate ---------- */
+.rcv-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background:
+        radial-gradient(120% 80% at 50% 110%, var(--primary-glow), transparent 60%),
+        var(--rcv-surface);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.rcv-gate.active-gate { display: flex; }
+.rcv-gate.is-leaving {
+    opacity: 0;
+    transform: scale(1.04);
+    pointer-events: none;
+}
+
+.rcv-gate-card {
+    position: relative;
+    width: min(100%, 420px);
+    padding: 64px 28px 28px;
+    border-radius: 22px;
+    background: var(--rcv-paper);
+    color: var(--rcv-ink);
+    text-align: center;
+    box-shadow: 0 30px 70px rgba(var(--rcv-shadow-rgb), 0.55), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    animation: rcvBreathe 3s ease-in-out infinite;
+}
+/* Envelope flap across the top of the card */
+.rcv-gate-flap {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 92px;
+    border-radius: 22px 22px 0 0;
+    background: linear-gradient(180deg, var(--rcv-paper-edge), #f8ece2);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    box-shadow: 0 1px 0 var(--rcv-hair);
+}
+.rcv-seal {
+    position: absolute;
+    top: 58px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 35% 30%, #d84a6f, #8f1d3d 70%);
+    box-shadow: 0 6px 16px rgba(120, 20, 50, 0.45), inset 0 -3px 6px rgba(0, 0, 0, 0.25);
+    color: #fff4f0;
+    font: 700 1.6rem var(--font-display);
+}
+.rcv-eyebrow {
+    margin: 30px 0 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rcv-ink-soft);
+}
+.rcv-gate-headline {
+    margin: 0 0 24px;
+    font-family: var(--font-display);
+    font-size: clamp(1.45rem, 5.6vw, 1.9rem);
+    line-height: 1.45;
+    font-weight: 700;
+    color: var(--rcv-ink);
+    text-wrap: balance;
+}
+.rcv-hl { color: var(--rcv-accent-ink); }
+.rcv-hl-name { white-space: nowrap; }
+
+/* Gold open button (kept from v1: reviewers loved it) with a quiet progress line */
+.rcv-open-btn {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 300px;
+    min-height: 58px;
+    padding: 0 28px;
+    border: 0;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--rcv-gold-1), var(--rcv-gold-2));
+    color: var(--rcv-gold-ink);
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(224, 173, 53, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.rcv-open-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(224, 173, 53, 0.55); }
+.rcv-open-btn:active { transform: scale(0.98); }
+.rcv-open-progress {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 8px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(59, 38, 0, 0.14);
+    overflow: hidden;
+    transition: opacity 0.4s ease;
+}
+.rcv-open-progress > span {
+    display: block;
+    height: 100%;
+    background: rgba(59, 38, 0, 0.55);
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform 0.35s ease;
+}
+.rcv-open-btn[data-state="ready"] .rcv-open-progress { opacity: 0; }
+.rcv-open-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(59, 38, 0, 0.25);
+    border-top-color: var(--rcv-gold-ink);
+    animation: rcvSpin 0.8s linear infinite;
+}
+.rcv-open-btn[data-state="waiting"] .rcv-open-spinner { display: inline-block; }
+.rcv-open-btn[data-state="waiting"] { cursor: progress; }
+
+.rcv-gate-sound {
+    margin: 16px 0 0;
+    font-size: 0.85rem;
+    color: var(--rcv-ink-soft);
+}
+
+/* ---------- Stage ---------- */
+.rcv-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.6s ease;
+}
+.rcv-stage.is-live { opacity: 1; visibility: visible; }
+.rcv-stage canvas { display: block; touch-action: none; }
+
+/* ---------- HUD ---------- */
+.rcv-hud {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.2s;
+}
+.rcv-hud.is-live { opacity: 1; }
+.rcv-hud > * { pointer-events: auto; }
+.rcv-hud .rcv-title { pointer-events: none; }
+
+.rcv-title {
+    position: absolute;
+    left: 50%;
+    margin: 0;
+    color: var(--rcv-title-ink);
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-shadow: var(--rcv-title-shadow);
+    opacity: 0;
+    transform: translate(-50%, 10px);
+    transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.9s cubic-bezier(0.2, 0.8, 0.2, 1), font-size 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+    top: 16%;
+    width: min(92vw, 820px);
+    font-size: clamp(1.9rem, 7vw, 3.4rem);
+    line-height: 1.35;
+    text-wrap: balance;
+}
+.rcv-title .rcv-hl { color: var(--rcv-title-hl); }
+.rcv-title.is-hero { opacity: 1; transform: translate(-50%, 0); }
+.rcv-title.is-docked {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    top: calc(14px + var(--rcv-safe-t));
+    width: calc(100vw - 150px);
+    max-width: 560px;
+    font-size: clamp(1rem, 3.6vw, 1.3rem);
+    line-height: 44px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rcv-controls {
+    position: absolute;
+    top: calc(12px + var(--rcv-safe-t));
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.rcv-hud-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 56px;
+    min-height: 56px;
+    padding: 6px 4px;
+    border-radius: 16px;
+    border: 1px solid var(--rcv-hud-line);
+    background: var(--rcv-hud-bg);
+    color: var(--rcv-hud-ink);
+    cursor: pointer;
+    font-size: 1.05rem;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+.rcv-hud-btn:hover { background: var(--rcv-hud-hover); }
+.rcv-hud-btn:active { transform: scale(0.96); }
+.rcv-hud-btn[hidden] { display: none; }
+.rcv-hud-btn[aria-pressed="false"] { color: var(--rcv-hud-ink-dim); }
+.rcv-hud-label { font-size: 0.66rem; font-weight: 600; line-height: 1.2; }
+
+/* Wish beat */
+.rcv-wish {
+    position: absolute;
+    left: 50%;
+    bottom: calc(40px + var(--rcv-safe-b));
+    transform: translateX(-50%);
+    width: min(92vw, 460px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+    animation: rcvRise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rcv-wish[hidden], .rcv-blow[hidden], .rcv-mic-sheet[hidden] { display: none; }
+.rcv-breath {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--rcv-breath);
+    box-shadow: 0 0 24px var(--rcv-breath-glow);
+    animation: rcvBreath 4s ease-in-out infinite;
+}
+.rcv-wish-text {
+    margin: 0;
+    color: var(--rcv-title-ink);
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 4.8vw, 1.6rem);
+    line-height: 1.5;
+    text-shadow: var(--rcv-wish-shadow);
+}
+
+/* Blow beat */
+.rcv-blow {
+    position: absolute;
+    left: 50%;
+    bottom: calc(20px + var(--rcv-safe-b));
+    transform: translateX(-50%);
+    width: min(94vw, 520px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    animation: rcvRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rcv-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: var(--rcv-hud-bg);
+    border: 1px solid var(--rcv-hud-line);
+    color: var(--rcv-hud-ink);
+    box-shadow: 0 10px 30px rgba(var(--rcv-shadow-rgb), 0.35);
+}
+.rcv-pill p { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.45; }
+.rcv-pill-icon { color: var(--rcv-hud-accent); }
+.rcv-count {
+    flex: none;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--rcv-count-bg);
+    color: var(--rcv-hud-accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.rcv-count:empty { display: none; }
+.rcv-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--rcv-hud-line);
+    background: var(--rcv-link-bg);
+    color: var(--rcv-hud-ink);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+.rcv-link-btn[hidden] { display: none; }
+.rcv-link-btn[aria-pressed="true"] { border-color: var(--rcv-hud-accent); color: var(--rcv-hud-accent); }
+.rcv-meter {
+    width: min(70vw, 260px);
+    height: 6px;
+    border-radius: 3px;
+    background: var(--rcv-meter-track);
+    overflow: hidden;
+}
+.rcv-meter[hidden] { display: none; }
+.rcv-meter > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--rcv-gold-2), var(--rcv-gold-1));
+    transform-origin: left center;
+    transform: scaleX(0);
+}
+
+/* Mic pre-permission sheet */
+.rcv-mic-sheet {
+    position: absolute;
+    left: 50%;
+    bottom: calc(20px + var(--rcv-safe-b));
+    transform: translateX(-50%);
+    z-index: 2;
+    width: min(94vw, 420px);
+    padding: 20px;
+    border-radius: 20px;
+    background: var(--rcv-paper);
+    color: var(--rcv-ink);
+    box-shadow: 0 20px 50px rgba(var(--rcv-shadow-rgb), 0.5);
+    animation: rcvRise 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rcv-mic-sheet p { margin: 0 0 16px; font-size: 1rem; line-height: 1.6; }
+.rcv-row { display: flex; gap: 10px; }
+.rcv-row .rcv-btn { flex: 1; }
+
+/* Buttons */
+.rcv-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s ease, filter 0.2s ease;
+}
+.rcv-btn:active { transform: scale(0.98); }
+.rcv-btn[hidden] { display: none; }
+.rcv-btn-gold {
+    background: linear-gradient(135deg, var(--rcv-gold-1), var(--rcv-gold-2));
+    color: var(--rcv-gold-ink);
+    box-shadow: 0 8px 20px rgba(224, 173, 53, 0.35);
+}
+.rcv-btn-gold:hover { filter: brightness(1.04); }
+.rcv-btn-ghost {
+    background: transparent;
+    border-color: var(--rcv-hair);
+    color: var(--rcv-ink);
+}
+.rcv-wish .rcv-btn-gold { min-width: 200px; }
+
+/* Dim the chrome during the wish so the flames own the frame. */
+.rcv.is-dim .rcv-controls, .rcv.is-dim .rcv-lang { opacity: 0.45; transition: opacity 0.6s ease; }
+
+/* ---------- Message card ---------- */
+.rcv-card {
+    position: fixed;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 66vh;
+    max-height: 66dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--rcv-paper);
+    color: var(--rcv-ink);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -20px 60px rgba(var(--rcv-shadow-rgb), 0.45);
+    transform: translateY(105%);
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.5s;
+    visibility: hidden;
+}
+.rcv-card.is-open {
+    transform: translateY(0);
+    visibility: visible;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rcv-card-handle {
+    flex: none;
+    width: 44px;
+    height: 5px;
+    margin: 10px auto 0;
+    border-radius: 3px;
+    background: var(--rcv-hair);
+}
+.rcv-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--rcv-hair);
+    background: #fff;
+    color: var(--rcv-ink);
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+.rcv-card-scroll {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 14px 24px calc(24px + var(--rcv-safe-b));
+    text-align: center;
+}
+.rcv-card-to {
+    margin: 4px 48px 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--rcv-ink-soft);
+}
+.rcv-card-to .rcv-hl { color: var(--rcv-accent-ink); font-weight: 700; }
+.rcv-card-to[data-note]::after {
+    content: attr(data-note);
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+.rcv-card-date {
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--rcv-ink-soft);
+}
+.rcv-card-date:empty { display: none; }
+.rcv-card-photo {
+    display: block;
+    width: min(100%, 280px);
+    aspect-ratio: 1;
+    object-fit: cover;
+    margin: 8px auto 14px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(58, 30, 42, 0.18);
+}
+.rcv-card-photo[hidden] { display: none; }
+.rcv-card-text h2 {
+    margin: 4px 0 14px;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 6vw, 2.2rem);
+    line-height: 1.4;
+    color: var(--rcv-ink);
+    text-wrap: balance;
+}
+.rcv-card-text h2:focus { outline: none; }
+.rcv-card-message {
+    margin: 0 0 18px;
+    font-size: 1.08rem;
+    line-height: 1.85;
+    color: var(--rcv-ink);
+    white-space: pre-line;
+    overflow-wrap: break-word;
+}
+.rcv-card-signature {
+    margin: 0 0 20px;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-style: italic;
+    color: var(--rcv-ink-soft);
+}
+.rcv-card-signature .rcv-hl { color: var(--rcv-accent-ink); font-style: normal; font-weight: 700; }
+
+/* The card-font classes from style.css were built for glass on dark:
+   keep their typefaces, drop the white gradient text. */
+.rcv .rcv-card-text.font-sans h2,
+.rcv .rcv-card-text.font-serif h2,
+.rcv .rcv-card-text.font-handwriting h2 {
+    background: none !important;
+    -webkit-text-fill-color: currentColor !important;
+    color: var(--rcv-ink) !important;
+}
+.rcv .rcv-card-text.font-handwriting h2 { font-size: clamp(2.2rem, 9vw, 3rem) !important; }
+.rcv .rcv-card-text.font-handwriting p { font-size: 1.5rem !important; }
+
+.rcv-btn-letter {
+    width: 100%;
+    margin: 0 0 18px;
+    background: #fff;
+    border-color: var(--rcv-hair);
+    color: var(--rcv-accent-ink);
+}
+.rcv-end {
+    border-top: 1px solid var(--rcv-hair);
+    padding-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.rcv-end .rcv-btn-gold { width: 100%; }
+.rcv-end-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rcv-end-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 64px;
+    padding: 8px 4px;
+    border-radius: 14px;
+    border: 1px solid var(--rcv-hair);
+    background: #fff;
+    color: var(--rcv-ink);
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    cursor: pointer;
+}
+.rcv-end-btn i { font-size: 1.05rem; color: var(--rcv-accent-ink); }
+.rcv-end-btn:hover { background: #fffdfb; border-color: rgba(58, 30, 42, 0.25); }
+
+@media (min-width: 900px) {
+    .rcv-card {
+        left: auto;
+        top: 24px;
+        right: 24px;
+        bottom: 24px;
+        width: 420px;
+        max-height: none;
+        border-radius: 24px;
+        transform: translateX(calc(100% + 40px));
+        box-shadow: 0 30px 80px rgba(var(--rcv-shadow-rgb), 0.5);
+    }
+    .rcv-card.is-open { transform: translateX(0); }
+    .rcv-card-handle { visibility: hidden; }
+    .rcv-card-scroll { padding: 20px 32px 28px; }
+    .rcv-card.is-open ~ .rcv-hud .rcv-controls,
+    .rcv-hud:has(~ .rcv-card.is-open) .rcv-controls { right: 460px; }
+}
+@media (max-width: 899px) {
+    /* The sheet carries its own actions; keep the HUD out of its way. */
+    .rcv-hud:has(~ .rcv-card.is-open) .rcv-controls { opacity: 0; pointer-events: none; }
+}
+
+/* ---------- Letter overlay (structure from v1, readable on phones) ---------- */
+.rcv .letter-overlay-gate { background: var(--rcv-veil); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.rcv .letter-open-hint { opacity: 0; transform: translateX(-50%) translateY(10px); }
+.rcv .letter-open-hint.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.rcv .letter-close-btn { width: 44px; height: 44px; color: #fff; }
+.rcv .interactive-envelope { cursor: pointer; }
+.rcv .envelope-paper { background-color: var(--rcv-paper); }
+@media (max-width: 600px) {
+    .rcv .letter-popup-wrapper { width: calc(100% - 32px); }
+    .rcv .interactive-envelope { height: 300px; margin-top: 70px; }
+    .rcv .envelope-paper { height: 270px; padding: 1.4rem; }
+    .rcv .interactive-envelope.open .envelope-paper { min-height: 0; max-height: 78dvh; }
+    .rcv .letter-inner-content h2 { font-size: 1.5rem; }
+    .rcv #letter-popup-body { font-size: 1.05rem; line-height: 1.9; }
+    .rcv .letter-body-scroll { max-height: 55dvh; }
+    /* Hint below the envelope so it never collides with the close button. */
+    .rcv .letter-open-hint { white-space: normal; width: max-content; max-width: calc(100vw - 48px); font-size: 0.95rem; top: auto; bottom: -72px; animation: none; }
+    .rcv .letter-close-btn { top: -56px; right: 0; }
+}
+
+/* ---------- Photo preview, gift bubbles ---------- */
+.rcv-photo-preview {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px 16px;
+    background: rgba(8, 4, 12, 0.92);
+    color: #fff;
+    text-align: center;
+}
+.rcv-photo-preview[hidden] { display: none; }
+.rcv-photo-preview img { max-width: 100%; max-height: 70dvh; border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+.rcv-photo-preview .rcv-btn-ghost { color: #fff; border-color: rgba(255, 255, 255, 0.35); }
+
+.rcv-bubbles { position: fixed; inset: 0; z-index: 25; pointer-events: none; }
+.rcv-bubble {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    max-width: min(80vw, 320px);
+    padding: 10px 18px;
+    border-radius: 18px;
+    background: var(--rcv-paper);
+    color: var(--rcv-ink);
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(var(--rcv-shadow-rgb), 0.4);
+    animation: rcvBubble 2.5s ease-out forwards;
+}
+
+/* ---------- Light backdrops ----------
+   The 3D frame is transparent and the backdrop gradient is CSS (backdrops.js),
+   so page, gate and stage are one continuous surface. Chrome turns into white
+   frosted pills with the backdrop's own dark ink (all >= 4.5:1). */
+#receiver-view.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) {
+    --rcv-surface: var(--rcv-backdrop);
+    --rcv-hud-bg: rgba(255, 255, 255, 0.86);
+    --rcv-hud-line: rgba(58, 30, 42, 0.14);
+    --rcv-hud-ink: var(--rcv-bd-ink);
+    --rcv-hud-ink-dim: var(--rcv-bd-soft);
+    --rcv-hud-hover: #fff;
+    --rcv-title-ink: var(--rcv-bd-ink);
+    --rcv-title-hl: var(--rcv-bd-accent);
+    --rcv-title-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 22px rgba(255, 255, 255, 0.9);
+    --rcv-wish-shadow: 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 18px rgba(255, 255, 255, 0.95);
+    --rcv-hud-accent: #875600;
+    --rcv-count-bg: rgba(224, 173, 53, 0.2);
+    --rcv-link-bg: rgba(255, 255, 255, 0.8);
+    --rcv-meter-track: rgba(58, 30, 42, 0.12);
+    --rcv-breath: var(--rcv-bd-accent);
+    --rcv-breath-glow: rgba(255, 255, 255, 0.9);
+    --rcv-focus: var(--rcv-bd-accent);
+    --rcv-shadow-rgb: 70, 36, 50;
+    --rcv-veil: rgba(40, 24, 34, 0.5);
+    color: var(--rcv-bd-ink);
+}
+@supports (color: color-mix(in srgb, red 50%, blue)) {
+    #receiver-view.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) {
+        --rcv-hud-line: color-mix(in srgb, var(--rcv-bd-ink) 16%, transparent);
+        --rcv-veil: color-mix(in srgb, var(--rcv-bd-ink) 55%, transparent);
+    }
+}
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-stage { background: var(--rcv-backdrop); }
+/* The wish "dims the room": paper cannot go dark, so a soft warm vignette
+   closes in around the cake instead and the flames own the frame. */
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse 62% 58% at 50% 42%, rgba(var(--rcv-shadow-rgb), 0) 45%, rgba(var(--rcv-shadow-rgb), 0.16) 100%);
+    opacity: 0;
+    transition: opacity 0.9s ease;
+}
+.rcv.is-dim[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-stage::after { opacity: 1; }
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-gate {
+    background:
+        radial-gradient(110% 70% at 50% 115%, rgba(255, 255, 255, 0.65), transparent 60%),
+        var(--rcv-backdrop);
+}
+/* Soft paper shadows instead of black drop shadows. */
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-gate-card {
+    box-shadow: 0 24px 60px rgba(var(--rcv-shadow-rgb), 0.16), 0 2px 8px rgba(var(--rcv-shadow-rgb), 0.08),
+        0 0 0 1px rgba(var(--rcv-shadow-rgb), 0.06);
+}
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-hud-btn,
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-lang,
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-link-btn {
+    box-shadow: 0 4px 14px rgba(var(--rcv-shadow-rgb), 0.1);
+}
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-pill { box-shadow: 0 8px 24px rgba(var(--rcv-shadow-rgb), 0.14); }
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-mic-sheet,
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-bubble { box-shadow: 0 16px 40px rgba(var(--rcv-shadow-rgb), 0.18); }
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-card {
+    box-shadow: 0 -10px 40px rgba(var(--rcv-shadow-rgb), 0.16), 0 0 0 1px rgba(var(--rcv-shadow-rgb), 0.06);
+}
+@media (min-width: 900px) {
+    .rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-card {
+        box-shadow: 0 24px 64px rgba(var(--rcv-shadow-rgb), 0.18), 0 0 0 1px rgba(var(--rcv-shadow-rgb), 0.06);
+    }
+}
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-btn-gold { box-shadow: 0 8px 20px rgba(196, 140, 20, 0.28); }
+.rcv[data-backdrop]:not([data-backdrop="night"]):not([data-backdrop="party"]) .rcv-open-btn {
+    box-shadow: 0 10px 24px rgba(196, 140, 20, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- Motion ---------- */
+@keyframes rcvBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.015); } }
+@keyframes rcvSpin { to { transform: rotate(360deg); } }
+@keyframes rcvBreath { 0%, 100% { transform: scale(0.8); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 1; } }
+@keyframes rcvRise { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes rcvBubble {
+    0% { opacity: 0; transform: translate(-50%, -30%) scale(0.9); }
+    12% { opacity: 1; transform: translate(-50%, -60%) scale(1); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -160%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rcv-gate-card, .rcv-breath, .rcv-open-spinner { animation: none; }
+    .rcv-gate, .rcv-stage, .rcv-hud, .rcv-title, .rcv-card { transition-duration: 0.15s !important; }
+    .rcv-wish, .rcv-blow, .rcv-mic-sheet { animation: none; }
+    .rcv-bubble { animation-duration: 2.5s; animation-name: rcvFade; }
+    @keyframes rcvFade { 0%, 100% { opacity: 0; } 15%, 80% { opacity: 1; } }
+}
+
+/* Japanese: break at phrase boundaries instead of mid-word. */
+html[lang="ja"] .rcv-card-text h2,
+html[lang="ja"] .rcv-gate-headline,
+html[lang="ja"] .rcv-title { word-break: auto-phrase; }
+
+/* ---------- Party room (backdrop "party") ----------
+   The 3D room is dark, then lit, then candle-dim, so the chrome keeps the
+   night set (dark frosted pills, white ink): it reads over all three. Big
+   text over the lit room carries its own dark outline instead of relying on
+   what happens to be behind it. */
+.rcv[data-backdrop="party"] .rcv-gate {
+    background:
+        radial-gradient(60% 45% at 78% 30%, rgba(96, 120, 200, 0.28), transparent 70%),
+        radial-gradient(40% 30% at 70% 62%, rgba(255, 170, 80, 0.16), transparent 70%),
+        linear-gradient(180deg, rgba(8, 10, 22, 0.35), rgba(8, 6, 14, 0.7)),
+        var(--rcv-gate-poster, linear-gradient(180deg, #121a33 0%, #0c0f1f 55%, #07060c 100%));
+    background-size: cover;
+    background-position: center;
+}
+
+.rcv-quiet-btn {
+    display: block;
+    margin: 10px auto 0;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--rcv-ink-soft);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--rcv-hair);
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+.rcv-quiet-btn:hover { color: var(--rcv-ink); }
+
+/* Dark phase: nothing but the room, the switch and one line of text. */
+.rcv.is-dark .rcv-controls { opacity: 0.8; }
+
+.rcv-switch {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72px;
+    height: 72px;
+    margin: -36px 0 0 -36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #ffe3a8;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    will-change: transform;
+    -webkit-tap-highlight-color: transparent;
+}
+.rcv-switch[hidden] { display: none; }
+.rcv-switch-ring {
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 214, 140, 0.9);
+    box-shadow: 0 0 18px rgba(255, 190, 90, 0.75), inset 0 0 12px rgba(255, 190, 90, 0.45);
+    animation: rcvSwitchBreath 1.6s ease-in-out infinite;
+}
+.rcv-switch-hand {
+    font-size: 1.35rem;
+    opacity: 0;
+    transform: translate(10px, 18px);
+    transition: opacity 0.4s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+}
+.rcv-switch.is-urgent .rcv-switch-hand { opacity: 1; animation: rcvSwitchTap 1.2s ease-in-out infinite; }
+.rcv-switch.is-offscreen { opacity: 0.001; }
+.rcv-switch.is-pressed .rcv-switch-ring { animation: none; transform: scale(0.8); opacity: 0; transition: transform 0.08s ease, opacity 0.08s ease; }
+.rcv-switch:focus-visible { outline-offset: 0; }
+
+.rcv-dark-hint {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: calc(100vw - 32px);
+    margin: 0;
+    padding: 10px 18px;
+    border-radius: 16px;
+    background: rgba(10, 8, 18, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff6e6;
+    font-size: 1.02rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    width: max-content;
+    pointer-events: none;
+    opacity: 0;
+    will-change: transform;
+}
+.rcv-dark-hint[hidden] { display: none; }
+.rcv-dark-hint.is-in { animation: rcvFadeIn 0.5s ease forwards; }
+
+.rcv-dark-skip {
+    position: absolute;
+    right: 16px;
+    bottom: calc(20px + var(--rcv-safe-b));
+    background: rgba(10, 8, 18, 0.72);
+    color: #fff;
+}
+
+/* The SURPRISE hit: huge, outlined, gone in under 2 s. */
+.rcv-surprise {
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    width: min(96vw, 900px);
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(3rem, 15vw, 7.5rem);
+    line-height: 1.2;
+    color: #fff4d6;
+    -webkit-text-stroke: 0.07em rgba(70, 18, 36, 0.92);
+    paint-order: stroke fill;
+    text-shadow: 0 4px 14px rgba(40, 10, 20, 0.5);
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 0;
+    pointer-events: none;
+}
+/* Rasterized during the dark phase: an almost invisible promoted layer, so
+   the reveal frame only animates opacity/transform (its first raster at DPR 3
+   was a ~110 ms frame). */
+.rcv-surprise.is-warm {
+    opacity: 0.001;
+    will-change: transform, opacity;
+    contain: layout paint;
+}
+.rcv-surprise.is-hit { animation: rcvSurprise 1.9s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+.rcv-cake-coming {
+    position: absolute;
+    left: 50%;
+    bottom: calc(96px + var(--rcv-safe-b));
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: var(--rcv-hud-bg);
+    border: 1px solid var(--rcv-hud-line);
+    color: var(--rcv-hud-ink);
+    font-weight: 600;
+    white-space: nowrap;
+    animation: rcvRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rcv-cake-coming[hidden] { display: none; }
+
+/* Karaoke: the current line only, name in the accent colour. */
+.rcv-lyrics {
+    position: absolute;
+    left: 50%;
+    bottom: calc(28px + var(--rcv-safe-b));
+    transform: translateX(-50%);
+    width: min(94vw, 560px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    animation: rcvRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.rcv-lyrics[hidden] { display: none; }
+.rcv-lyrics p {
+    margin: 0;
+    padding: 10px 22px;
+    border-radius: 18px;
+    background: rgba(10, 8, 18, 0.66);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff6e6;
+    font-family: var(--font-display);
+    font-size: clamp(1.15rem, 4.8vw, 1.6rem);
+    font-weight: 700;
+    line-height: 1.45;
+}
+.rcv-lyrics .rcv-hl { color: var(--rcv-gold-1); }
+.rcv-skip-song { font-size: 0.85rem; }
+
+/* Over the lit room the docked name gets its own dark pill. */
+.rcv[data-backdrop="party"] .rcv-title.is-docked {
+    width: auto;
+    max-width: min(560px, calc(100vw - 150px));
+    padding: 0 16px;
+    border-radius: 22px;
+    background: var(--rcv-hud-bg);
+    border: 1px solid var(--rcv-hud-line);
+    text-shadow: none;
+}
+.rcv[data-backdrop="party"] .rcv-title.is-hero {
+    -webkit-text-stroke: 0.06em rgba(40, 14, 26, 0.85);
+    paint-order: stroke fill;
+}
+
+.rcv-stage.is-cut { opacity: 0; transition: opacity 0.16s ease; }
+
+@keyframes rcvSwitchBreath {
+    0%, 100% { transform: scale(0.86); opacity: 0.75; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes rcvSwitchTap {
+    0%, 100% { transform: translate(10px, 18px); }
+    50% { transform: translate(4px, 10px); }
+}
+@keyframes rcvFadeIn { to { opacity: 1; } }
+@keyframes rcvSurprise {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(1.15); }
+    6% { opacity: 1; }
+    20% { transform: translate(-50%, -50%) scale(1); }
+    68% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -70%) scale(0.98); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .rcv-switch-ring { animation: none; }
+    .rcv-switch.is-urgent .rcv-switch-hand { animation: none; }
+    /* The global reduced-motion rule zeroes animation durations, so the
+       word is simply shown, still, for its 2 s (viewer.js removes is-hit). */
+    .rcv-surprise.is-hit { animation: none !important; opacity: 1; transform: translate(-50%, -50%); }
+    .rcv-lyrics, .rcv-cake-coming { animation: none; }
+}
+/* The wish line sits over the candle-lit table: give it the lyric pill. */
+.rcv[data-backdrop="party"] .rcv-wish-text {
+    padding: 8px 20px;
+    border-radius: 18px;
+    background: rgba(10, 8, 18, 0.66);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff6e6;
+    text-shadow: none;
+}
+
+/* Party: the name pill fades in where it docks (no travel from a hero spot
+   over the foil letters, no mid-transition ellipsis), and steps aside while
+   the lyric line and the wish carry the name. */
+.rcv[data-backdrop="party"] .rcv-title { transition: opacity 0.5s ease; }
+.rcv .rcv-title.is-tucked { opacity: 0; }
+
+/* ---------- Desktop message card: a centred paper card, not a tall rail ---------- */
+@media (min-width: 900px) {
+    .rcv-card {
+        top: 50%;
+        bottom: auto;
+        right: 32px;
+        width: 480px;
+        height: auto;
+        max-height: calc(100vh - 48px);
+        max-height: calc(100dvh - 48px);
+        border-radius: 28px;
+        transform: translate(calc(100% + 48px), -50%);
+        background:
+            radial-gradient(120% 60% at 50% 0%, rgba(255, 255, 255, 0.9), transparent 70%),
+            var(--rcv-paper);
+    }
+    .rcv-card.is-open { transform: translate(0, -50%); }
+    .rcv-card::before {
+        /* A thin gold rule across the top: the card reads as stationery. */
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 48px;
+        right: 48px;
+        height: 4px;
+        border-radius: 0 0 4px 4px;
+        background: linear-gradient(90deg, transparent, var(--rcv-gold-2), var(--rcv-gold-1), var(--rcv-gold-2), transparent);
+    }
+    .rcv-card-scroll { padding: 34px 44px 30px; }
+    .rcv-card-to { font-size: 0.9rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+    .rcv-card-text h2 { font-size: 2.35rem; line-height: 1.3; margin: 8px 0 18px; }
+    .rcv-card-message { font-size: 1.14rem; line-height: 1.95; margin-bottom: 22px; }
+    .rcv-card-signature { font-size: 1.25rem; margin-bottom: 26px; }
+    .rcv-card-photo { width: 100%; max-width: none; aspect-ratio: 4 / 3; border-radius: 18px; margin: 10px 0 20px; }
+    .rcv-card-text::after {
+        content: "";
+        display: block;
+        width: 56px;
+        height: 1px;
+        margin: 0 auto 22px;
+        background: var(--rcv-hair);
+    }
+    .rcv-end { border-top: 0; padding-top: 0; }
+    .rcv-card.is-open ~ .rcv-hud .rcv-controls,
+    .rcv-hud:has(~ .rcv-card.is-open) .rcv-controls { right: 528px; }
+}
+/* The reveal frame holds the letters, the name and the table: the word
+   sits over the empty ceiling instead of on the foil. */
+.rcv[data-backdrop="party"] .rcv-surprise { top: 21%; }
+
+/* ---------- Dark beat: vignette + film grain (CSS only, no render pass) ----------
+   Night-for-night look while the room is dark (review-dark.md P1b). Both
+   fade out in 250 ms at the switch cut so the reveal is clean and bright. */
+.rcv[data-backdrop="party"] .rcv-stage::before,
+.rcv[data-backdrop="party"] .rcv-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.rcv[data-backdrop="party"] .rcv-stage::before {
+    background: radial-gradient(ellipse 75% 70% at 55% 48%, transparent 40%, rgba(4, 6, 12, 0.55) 100%);
+}
+.rcv[data-backdrop="party"] .rcv-stage::after {
+    background-image: var(--rcv-grain, none);
+    background-size: 128px 128px;
+    inset: -128px;
+    animation: rcvGrain 1s steps(12) infinite;
+    animation-play-state: paused;
+}
+.rcv.is-dark[data-backdrop="party"] .rcv-stage::before { opacity: 1; }
+.rcv.is-dark[data-backdrop="party"] .rcv-stage::after { opacity: 0.04; animation-play-state: running; }
+@media (min-width: 900px) and (hover: hover) {
+    /* Desktop: soft-light grain reads as film; phones keep plain opacity
+       (blend-mode compositing costs frames on low-end Android). */
+    .rcv[data-backdrop="party"] .rcv-stage::after { mix-blend-mode: soft-light; }
+    .rcv.is-dark[data-backdrop="party"] .rcv-stage::after { opacity: 0.16; }
+}
+@keyframes rcvGrain {
+    0% { transform: translate(0, 0); } 17% { transform: translate(-37px, 21px); }
+    33% { transform: translate(52px, -44px); } 50% { transform: translate(-18px, 63px); }
+    67% { transform: translate(71px, 12px); } 83% { transform: translate(-60px, -29px); }
+    100% { transform: translate(0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    /* Static grain: texture without flicker. */
+    .rcv[data-backdrop="party"] .rcv-stage::after { animation: none !important; }
+}
+
+/* ---------- Poster mode (2D): baked stills + CSS light ----------
+   While the 3D room streams in, or on phones too slow to draw it. The
+   object-position pans are the "head turn" (window side in the dark, the
+   party side when lit); viewer.js posterToScreen() mirrors these values. */
+.rcv-poster {
+    --rcv-poster-x: 86%;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    background: #05060b;
+    transition: opacity 0.6s ease;
+}
+.rcv-poster[hidden] { display: none; }
+.rcv-poster.is-lit { --rcv-poster-x: 57%; }
+@media (orientation: landscape) {
+    .rcv-poster { --rcv-poster-x: 62%; }
+    .rcv-poster.is-lit { --rcv-poster-x: 50%; }
+}
+.rcv-poster.is-leaving { opacity: 0; }
+.rcv-poster-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--rcv-poster-x) 50%;
+    transform-origin: var(--rcv-tour-origin, 50% 60%);
+    transition: object-position 0.65s cubic-bezier(0.33, 1, 0.68, 1), transform 3.2s ease-in-out, filter 0.8s ease;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+.rcv-poster-img-lit { opacity: 0; }
+.rcv-poster.is-lit .rcv-poster-img-lit { opacity: 1; animation: rcvPosterFlash 0.7s cubic-bezier(0.33, 1, 0.68, 1); }
+.rcv-poster.is-adapting .rcv-poster-img-dark { animation: rcvPosterAdapt 2.2s cubic-bezier(0.33, 1, 0.68, 1) both; }
+.rcv-poster.is-adapted .rcv-poster-img-dark { animation: none; filter: brightness(1.3); transition: filter 1.5s ease-in-out, object-position 0.65s cubic-bezier(0.33, 1, 0.68, 1); }
+.rcv-poster.is-tour .rcv-poster-img { transform: scale(1.14); }
+.rcv-poster.is-dimmed .rcv-poster-img-lit { filter: brightness(0.42) saturate(0.85); }
+@keyframes rcvPosterAdapt { from { filter: brightness(0.35); } to { filter: brightness(1); } }
+@keyframes rcvPosterFlash { from { filter: brightness(1.35); } to { filter: brightness(1); } }
+/* The same night grain and vignette as the live room. */
+.rcv-poster::before,
+.rcv-poster::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+.rcv-poster::before { background: radial-gradient(ellipse 75% 70% at 55% 48%, transparent 40%, rgba(4, 6, 12, 0.55) 100%); }
+.rcv-poster::after {
+    background-image: var(--rcv-grain, none);
+    background-size: 128px 128px;
+    inset: -128px;
+    animation: rcvGrain 1s steps(12) infinite;
+    animation-play-state: paused;
+}
+.rcv.is-dark .rcv-poster::before { opacity: 1; }
+.rcv.is-dark .rcv-poster::after { opacity: 0.04; animation-play-state: running; }
+@media (prefers-reduced-motion: reduce) {
+    .rcv-poster-img { transition: none; }
+    .rcv-poster.is-tour .rcv-poster-img { transform: none; }
+    .rcv-poster::after { animation: none !important; }
+}
+
+/* 2D candles: the thumb-sized version of the cake's candles (>= 56 px). */
+.rcv-candles2d {
+    position: absolute;
+    left: 50%;
+    bottom: calc(150px + var(--rcv-safe-b));
+    transform: translateX(-50%);
+    width: min(94vw, 420px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 10px;
+}
+.rcv-candles2d[hidden] { display: none; }
+.rcv-candle2d {
+    position: relative;
+    width: 56px;
+    height: 92px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.rcv-candle2d:disabled { cursor: default; }
+.rcv-candle2d-wax {
+    position: absolute;
+    left: 50%;
+    bottom: 4px;
+    width: 14px;
+    height: 46px;
+    margin-left: -7px;
+    border-radius: 4px 4px 3px 3px;
+    background: repeating-linear-gradient(135deg, #fff5f8 0 6px, #ff8fb1 6px 12px);
+    box-shadow: inset -3px 0 4px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.rcv-candle2d-flame {
+    position: absolute;
+    left: 50%;
+    bottom: 50px;
+    width: 18px;
+    height: 30px;
+    margin-left: -9px;
+    border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%;
+    background: radial-gradient(ellipse 40% 55% at 50% 70%, #fffbe6 0%, #ffd36b 45%, #ff8a1f 75%, rgba(255, 120, 20, 0) 100%);
+    box-shadow: 0 0 22px 8px rgba(255, 170, 60, 0.45);
+    transform-origin: 50% 90%;
+    opacity: 0;
+    transform: scale(0.2);
+    transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rcv-candle2d.is-lit .rcv-candle2d-flame { opacity: 1; transform: scale(1); animation: rcvFlicker 0.9s ease-in-out infinite alternate; }
+.rcv-candle2d.is-out .rcv-candle2d-flame { opacity: 0; transform: scale(0.1) rotate(-25deg); transition-duration: 0.28s; animation: none; }
+.rcv-candle2d.is-out::after {
+    /* A wisp of smoke from the wick. */
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 50px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    border-radius: 50%;
+    background: rgba(220, 220, 230, 0.55);
+    filter: blur(3px);
+    animation: rcvWisp 1.2s ease-out forwards;
+}
+@keyframes rcvFlicker {
+    0% { transform: scale(1) rotate(-2deg); }
+    100% { transform: scale(1.06, 0.95) rotate(2deg); }
+}
+@keyframes rcvWisp {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-40px) scale(2.4); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .rcv-candle2d.is-lit .rcv-candle2d-flame { animation: none; }
+    .rcv-candle2d.is-out::after { animation: none; opacity: 0; }
+}
+
+/* Tap feedback for the flames: where the finger landed. */
+.rcv-tap-ring {
+    position: fixed;
+    z-index: 26;
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 226, 160, 0.9);
+    pointer-events: none;
+    animation: rcvTapRing 0.45s ease-out forwards;
+}
+@keyframes rcvTapRing { from { opacity: 1; transform: scale(0.5); } to { opacity: 0; transform: scale(1.3); } }
+
+/* Thai phrases that must not split across lines (viewer.js KEEP_TOGETHER). */
+.rcv .rcv-nowrap { white-space: nowrap; }
+
+/* The docked name never truncates: it wraps to two lines and scales down. */
+.rcv-title.is-docked {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.3;
+    min-height: 44px;
+    padding-block: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(0.9rem, 3.6vw, 1.3rem);
+}
+.rcv[data-backdrop="party"] .rcv-title.is-docked { padding: 6px 16px; }
+
+/* Small phones: the end actions stay on screen at the bottom of the sheet. */
+@media (max-width: 899px) {
+    .rcv-card-scroll { padding-bottom: 0; }
+    .rcv-end {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        margin: 0 -24px;
+        padding: 14px 24px calc(14px + var(--rcv-safe-b));
+        background: var(--rcv-paper);
+        box-shadow: 0 -10px 18px -14px rgba(var(--rcv-shadow-rgb), 0.5);
+    }
+}

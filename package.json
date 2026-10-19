@@ -1,0 +1,42 @@
+{
+  "name": "h-b-d-interactive",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "eslint . && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "icons": "node scripts/gen-icons.mjs",
+    "room:fetch": "node scripts/room/fetch-assets.mjs && python scripts/room/make_city.py",
+    "room:optimize": "node scripts/room/optimize.mjs && node scripts/room/build-credits.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "animejs": "^3.2.2",
+    "canvas-confetti": "^1.9.3",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@fontsource-variable/noto-sans-thai": "^5.3.0",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@fontsource/great-vibes": "^5.3.0",
+    "@fontsource/mali": "^5.3.0",
+    "@fontsource/noto-serif-thai": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@fortawesome/free-brands-svg-icons": "^7.3.1",
+    "@fortawesome/free-regular-svg-icons": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "@gltf-transform/functions": "^4.5.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.12.0",
+    "meshoptimizer": "^1.2.0",
+    "playwright-core": "^1.63.0",
+    "sharp": "^0.35.4",
+    "vite": "^5.1.0"
+  }
+}
