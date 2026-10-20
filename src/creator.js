@@ -1004,7 +1004,8 @@ async function openShareSheet() {
     }
 
     if (!els.dialog.open) els.dialog.showModal();
-    els.lineBtn.focus();
+    if (!els.lineBtn.hidden) els.lineBtn.focus();
+    else els.copyBtn.focus();
 }
 
 function bindShareSheet() {
