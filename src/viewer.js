@@ -555,6 +555,7 @@ function bindDomOnce() {
     $('btn-dark-skip')?.addEventListener('click', () => flipSwitch(false));
     $('btn-skip-song')?.addEventListener('click', endSong);
     $('btn-hud-audio')?.addEventListener('click', toggleMute);
+    $('select-hud-music')?.addEventListener('change', (e) => switchMusicTrack(e.target.value));
     $('btn-hud-card')?.addEventListener('click', () => openCard());
     $('btn-hud-reset')?.addEventListener('click', replay);
     $('btn-wish-ready')?.addEventListener('click', startBlow);
@@ -635,6 +636,7 @@ function resetDom() {
     const lang = $('lang-switcher-receiver');
     if (lang) lang.value = getCurrentLang();
     syncAudioButton();
+    updateMusicSelectUI(activeConfig?.music || 'happy-birthday-lofi');
     mic.state = 'off';
     const rv = $('receiver-view');
     rv?.classList.toggle('rcv-reduce', reduceMotion);
@@ -708,6 +710,20 @@ function translateReceiver() {
     // HUD
     fillTemplate($('rcv-title'), 'rcvHappyBirthday', { name });
     setHudLabel('btn-hud-audio', 'rcv-audio-label', t('rcvMusic'));
+    const selMusic = $('select-hud-music');
+    if (selMusic) {
+        const optLofi = selMusic.querySelector('option[value="happy-birthday-lofi"]');
+        if (optLofi) optLofi.textContent = t('crMusicLofi') || 'Warm lo-fi';
+        const optPiano = selMusic.querySelector('option[value="happy-birthday-piano"]');
+        if (optPiano) optPiano.textContent = t('crMusicPiano') || 'Piano';
+        const optSynth = selMusic.querySelector('option[value="happy-birthday-synth"]');
+        if (optSynth) optSynth.textContent = t('crMusicSynth') || 'Upbeat pop';
+        const optKid = selMusic.querySelector('option[value="kid"]');
+        if (optKid) optKid.textContent = t('crMusicKid') || 'KID';
+        const optBird = selMusic.querySelector('option[value="bird"]');
+        if (optBird) optBird.textContent = t('crMusicBird') || 'BIRD';
+    }
+    updateMusicSelectUI(activeConfig?.music || 'happy-birthday-lofi');
     setHudLabel('btn-hud-card', 'rcv-card-label', t('rcvShowCard'));
     setHudLabel('btn-hud-reset', 'rcv-reset-label', t('rcvReplay'));
     $('rcv-replay-label') && ($('rcv-replay-label').textContent = partyMode ? t('rcvReplaySurprise') : t('rcvReplay'));
@@ -2737,7 +2753,8 @@ function startSong() {
     if (strip) strip.hidden = false;
     updateLyrics();
     later(() => { const b = $('btn-skip-song'); if (b && phase === 'song') b.hidden = false; }, 3000);
-    later(endSong, SONG_LENGTH * 1000 + 300);
+    const songDuration = song?.duration ? song.duration() : SONG_LENGTH;
+    later(endSong, songDuration * 1000 + 300);
 }
 
 /** Karaoke strip: the current line, with the name in the accent colour. */
@@ -3239,14 +3256,14 @@ function fillCard() {
 
     const photo = $('rcv-card-photo');
     if (photo) {
-        if (activeConfig.photo && photo.dataset.src !== activeConfig.photo) {
-            photo.dataset.src = activeConfig.photo;
+        const photoUrl = activeConfig.photo || '/photos/1.jpg';
+        if (photoUrl && photo.dataset.src !== photoUrl) {
+            photo.dataset.src = photoUrl;
             photo.hidden = true;
             photo.onload = () => { photo.hidden = false; };
-            // A link that cannot be loaded simply leaves no photo, never a broken image.
             photo.onerror = () => { photo.hidden = true; };
-            photo.src = activeConfig.photo;
-        } else if (!activeConfig.photo) {
+            photo.src = photoUrl;
+        } else if (!photoUrl) {
             photo.hidden = true;
             photo.removeAttribute('src');
             delete photo.dataset.src;
@@ -3631,7 +3648,7 @@ function unlockAudio() {
     }
     audio = createAudioEngine({ muted });
     if (!audio) return;
-    song = createSong(audio, melodyWave);
+    song = createSong(audio, melodyWave, () => activeConfig?.music);
     roomTone = cues.createRoomTone(audio);
     partyLoop = cues.createPartyLoop(audio);
     // Recorded voices, if the owner has added them (one small JSON request).
@@ -3692,6 +3709,48 @@ function syncAudioButton() {
     btn.setAttribute('aria-pressed', muted ? 'false' : 'true');
     const icon = btn.querySelector('i');
     if (icon) icon.className = `fa-solid ${muted ? 'fa-volume-xmark' : 'fa-volume-high'}`;
+}
+
+const TRACK_SHORT_LABELS = {
+    'happy-birthday-lofi': 'Lo-fi',
+    'happy-birthday-piano': 'Piano',
+    'happy-birthday-synth': 'Pop',
+    'kid': 'KID',
+    'bird': 'BIRD'
+};
+
+function updateMusicSelectUI(trackName) {
+    const sel = $('select-hud-music');
+    if (sel && sel.value !== trackName) sel.value = trackName;
+    const label = $('rcv-music-label');
+    if (label) {
+        const shortName = TRACK_SHORT_LABELS[trackName] || 'Song';
+        label.textContent = `${shortName} ▾`;
+    }
+}
+
+function switchMusicTrack(trackName) {
+    if (!trackName) return;
+    if (!activeConfig) activeConfig = {};
+    activeConfig.music = trackName;
+    updateMusicSelectUI(trackName);
+
+    if (!audio) {
+        unlockAudio();
+    }
+    if (audio) {
+        if (muted) {
+            toggleMute();
+        } else {
+            song?.stop(0.2);
+            song = createSong(audio, melodyWave, () => activeConfig?.music);
+            const isBg = (phase === 'message' || phase === 'climax');
+            const level = isBg ? 0.35 : 0.8;
+            later(() => {
+                song?.start({ level, fadeIn: 0.4 });
+            }, 200);
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

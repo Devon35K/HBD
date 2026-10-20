@@ -189,10 +189,13 @@ function sanitizeCardConfig(config, defaults) {
     // Only https images, so a link cannot point the recipient's browser at an
     // arbitrary scheme or a plain-http tracker.
     out.photo = '';
-    if (typeof config.photo === 'string' && config.photo) {
+    if (typeof config.photo === 'string' && config.photo.trim()) {
+        const raw = config.photo.trim();
         try {
-            const url = new URL(config.photo);
-            if (url.protocol === 'https:') out.photo = url.href;
+            const url = new URL(raw, window.location.href);
+            if (url.protocol === 'https:' || url.protocol === 'http:' || raw.startsWith('/') || raw.startsWith('./')) {
+                out.photo = raw;
+            }
         } catch {
             out.photo = '';
         }

@@ -910,8 +910,9 @@ function refreshPhotoCheck() {
         return;
     }
     let url;
-    try { url = new URL(value); } catch { url = null; }
-    if (!url || url.protocol !== 'https:') {
+    try { url = new URL(value, window.location.href); } catch { url = null; }
+    const isLocal = value.startsWith('/') || value.startsWith('./');
+    if (!url || (!isLocal && url.protocol !== 'https:')) {
         status.textContent = t('crPhotoHttps');
         status.classList.add('is-warn');
         thumb.hidden = true;

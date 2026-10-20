@@ -199,19 +199,19 @@ const V2_HEADER_DEFLATED = 0x21;
 const V21_HEADER_RAW = 0x22;
 const V21_HEADER_DEFLATED = 0x23;
 const PACK_LAYOUT = [
-    ['theme', 4], ['preset', 3], ['music', 2], ['font', 2], ['cakeModel', 3],
+    ['theme', 4], ['preset', 3], ['music', 3], ['font', 2], ['cakeModel', 3],
     ['plate', 2], ['glaze', 2], ['topper', 2], ['letterTheme', 2], ['relation', 2],
     ['lang', 2], ['candles', 4], ['strawberries', 4], ['cherries', 4], ['rolls', 3],
     ['sprinkles', 1], ['letterEnabled', 1], ['decorHearts', 1], ['decorStars', 1],
     ['belated', 1], ['templated', 4], ['backdrop', 3]
-]; // 53 of 56 bits; append new fields into the spare bits only. Old v2.1
+]; // 54 of 56 bits; append new fields into the spare bits only. Old v2.1
 // links have zeros there, which is index 0 of each appended enum ('night').
 const PACK_BYTES = 7;
 
 const ENUMS = {
     theme: ['neon-rose', 'midnight-gold', 'pastel-mint', 'lavender-dream', 'sakura-blossom', 'cyber-retro', 'forest-moss', 'cosmic-nebula', 'choco-monarch'],
     preset: ['', 'pink-dream', 'chocolate-royal', 'mint-chocolate', 'midnight-gold', 'sakura-sweet', 'cosmic-crystal'],
-    music: ['happy-birthday-lofi', 'happy-birthday-piano', 'happy-birthday-synth'],
+    music: ['happy-birthday-lofi', 'happy-birthday-piano', 'happy-birthday-synth', 'kid', 'bird'],
     font: ['outfit', 'playfair', 'great-vibes'],
     cakeModel: ['classic-tiered', 'vintage-heart', 'korean-bento', 'triple-luxury', 'cyber-prism'],
     plate: ['ceramic', 'crystal', 'golden', 'cosmic'],

@@ -28,13 +28,68 @@ const HARMONY = [
 ];
 const BASS = [['C2', 2.5, 0], ['G2', 2.5, 3.2], ['C2', 2.5, 6.4], ['F2', 1.2, 9.7], ['G2', 1.0, 10.8], ['C2', 1.5, 11.8]];
 
+export const CUSTOM_AUDIO_TRACKS = {
+    'kid': 'audio/M1.mp3',
+    'bird': 'audio/M2.mp3',
+    'm1': 'audio/M1.mp3',
+    'm2': 'audio/M2.mp3'
+};
+
 /**
  * @param {object} engine  createAudioEngine() result
  * @param {() => string} waveOf  oscillator type for the melody (card's music choice)
+ * @param {() => string|string} trackOf  selected music track name
  */
-export function createSong(engine, waveOf = () => 'triangle') {
+export function createSong(engine, waveOf = () => 'triangle', trackOf = () => '') {
     const { ctx } = engine;
     const state = { loopTimer: 0, nextLoopAt: 0, loopsLeft: 0, level: 0.85, startedAt: 0, clapGain: 0 };
+
+    const trackName = typeof trackOf === 'function' ? trackOf() : trackOf;
+    const customFilePath = CUSTOM_AUDIO_TRACKS[trackName];
+
+    let customBuffer = null;
+    let customSource = null;
+    let customStartedTime = 0;
+    let isCustomPlaying = false;
+
+    if (customFilePath) {
+        const base = import.meta.env.BASE_URL || '/';
+        const url = `${base}${customFilePath}`.replace(/\/\//g, '/');
+        fetch(url)
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.arrayBuffer();
+            })
+            .then((buf) => ctx.decodeAudioData(buf))
+            .then((decoded) => {
+                customBuffer = decoded;
+                if (isCustomPlaying && !customSource) {
+                    playCustomSource(0.05, 0.5);
+                }
+            })
+            .catch((err) => {
+                console.warn('[audio] Could not load custom music track:', err);
+            });
+    }
+
+    function playCustomSource(delay = 0.05) {
+        if (!customBuffer) return;
+        if (customSource) {
+            try { customSource.stop(0); } catch { /* stopped */ }
+            customSource = null;
+        }
+        const now = ctx.currentTime;
+        customSource = ctx.createBufferSource();
+        customSource.buffer = customBuffer;
+        customSource.loop = true;
+        customSource.connect(engine.music);
+        customSource.start(now + delay);
+        customStartedTime = now + delay;
+        engine.voices.add(customSource);
+        customSource.onended = () => {
+            engine.voices.delete(customSource);
+        };
+    }
 
     function voice(freq, dur, at, kind, dest = engine.music) {
         if (!freq) return;
@@ -131,6 +186,11 @@ export function createSong(engine, waveOf = () => 'triangle') {
         g.linearRampToValueAtTime(0.0001, now + Math.max(0.02, fade));
         const stopAt = now + Math.max(0.03, fade);
         engine.voices.forEach((osc) => { try { osc.stop(stopAt); } catch { /* already stopped */ } });
+        if (customSource) {
+            try { customSource.stop(stopAt); } catch { /* stopped */ }
+            customSource = null;
+        }
+        isCustomPlaying = false;
     }
 
     return {
@@ -147,6 +207,15 @@ export function createSong(engine, waveOf = () => 'triangle') {
             state.nextLoopAt = now + delay;
             state.startedAt = now + delay;
             state.loopsLeft = passes;
+
+            if (customFilePath) {
+                isCustomPlaying = true;
+                if (customBuffer) {
+                    playCustomSource(delay);
+                }
+                return state.startedAt;
+            }
+
             pump();
             return state.startedAt;
         },
@@ -160,8 +229,18 @@ export function createSong(engine, waveOf = () => 'triangle') {
         },
         /** Seconds into the current pass (for lyrics), or -1 before it starts. */
         position() {
+            if (customFilePath && customBuffer) {
+                const t = ctx.currentTime - customStartedTime;
+                return t < 0 ? -1 : (t % customBuffer.duration);
+            }
             const t = ctx.currentTime - state.startedAt;
             return t < 0 ? -1 : t % SONG_LENGTH;
+        },
+        duration() {
+            if (customFilePath && customBuffer) {
+                return customBuffer.duration;
+            }
+            return SONG_LENGTH;
         },
         /** "...happy birthday to you" plus a ringing major chord, instead of cutting the song. */
         finalPhrase() {
@@ -170,9 +249,11 @@ export function createSong(engine, waveOf = () => 'triangle') {
             const g = engine.music.gain;
             g.cancelScheduledValues(t0);
             g.setValueAtTime(0.9, t0);
-            MELODY.filter(([, , o]) => o >= 9.7).forEach(([n, d, o]) => voice(NOTE[n], d, t0 + o - 9.7, 'melody'));
-            BASS.filter(([, , o]) => o >= 9.7).forEach(([n, d, o]) => voice(NOTE[n], d, t0 + o - 9.7, 'bass'));
-            const ring = t0 + 2.1;
+            if (!customFilePath) {
+                MELODY.filter(([, , o]) => o >= 9.7).forEach(([n, d, o]) => voice(NOTE[n], d, t0 + o - 9.7, 'melody'));
+                BASS.filter(([, , o]) => o >= 9.7).forEach(([n, d, o]) => voice(NOTE[n], d, t0 + o - 9.7, 'bass'));
+            }
+            const ring = t0 + (customFilePath ? 0.2 : 2.1);
             ['C4', 'E4', 'G4', 'C5'].forEach((n) => voice(NOTE[n], 2.6, ring, 'chord'));
             ['C6', 'E6', 'G6'].forEach((n, i) => voice(NOTE[n], 0.25, ring + 0.08 * i, 'shimmer'));
         }

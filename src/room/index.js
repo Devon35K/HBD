@@ -383,18 +383,169 @@ export async function createPartyRoom({ renderer, scene, camera, quality = 1, co
     frame.rotation.set(-0.2, -0.55, 0, 'YXZ');
     room.add(frame);
     disposers.push(() => { frameBox.geometry.dispose(); photo.geometry.dispose(); photoMat.dispose(); frameMat.dispose(); photoTex.dispose(); });
-    if (config.photo) {
-        // Swapping the map image keeps the program (map stays non-null).
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.decoding = 'async';
-        img.onload = () => {
-            if (disposed) return;
-            photoTex.image = coverCrop(img, 512, 640);
-            photoTex.needsUpdate = true;
-        };
-        img.src = config.photo;
+
+    // Mini companion picture frame on the table
+    const mfw = 0.082;
+    const mfh = 0.108;
+    const miniFrameMat = new THREE.MeshStandardMaterial({ color: 0x825c38, roughness: 0.4 });
+    trackEnv(miniFrameMat, 0.6);
+
+    const miniPhotoCanvas = document.createElement('canvas');
+    miniPhotoCanvas.width = 512;
+    miniPhotoCanvas.height = 640;
+    const miniCtx = miniPhotoCanvas.getContext('2d');
+    miniCtx.fillStyle = '#f5eee3';
+    miniCtx.fillRect(0, 0, 512, 640);
+    miniCtx.strokeStyle = '#c49a66';
+    miniCtx.lineWidth = 14;
+    miniCtx.strokeRect(40, 40, 432, 560);
+
+    const miniPhotoTex = new THREE.CanvasTexture(miniPhotoCanvas);
+    miniPhotoTex.colorSpace = THREE.SRGBColorSpace;
+    miniPhotoTex.flipY = true;
+    const miniPhotoMat = new THREE.MeshStandardMaterial({ map: miniPhotoTex, color: 0xd6d0c8, roughness: 0.7 });
+    trackEnv(miniPhotoMat, 0.6);
+
+    const miniFrame = new THREE.Group();
+    miniFrame.name = 'mini-photo-frame';
+    const miniFrameBox = new THREE.Mesh(new THREE.BoxGeometry(mfw + 0.018, mfh + 0.018, 0.01), miniFrameMat);
+    const miniPhoto = new THREE.Mesh(new THREE.PlaneGeometry(mfw, mfh), miniPhotoMat);
+    miniPhoto.position.z = 0.0055;
+    miniFrame.add(miniFrameBox, miniPhoto);
+    miniFrame.position.set(T.x + 0.23, T.height + (mfh + 0.018) / 2 * Math.cos(0.18), T.z - 0.18);
+    miniFrame.rotation.set(-0.18, -0.38, 0.04, 'YXZ');
+    room.add(miniFrame);
+
+    disposers.push(() => {
+        miniFrameBox.geometry.dispose();
+        miniPhoto.geometry.dispose();
+        miniPhotoMat.dispose();
+        miniFrameMat.dispose();
+        miniPhotoTex.dispose();
+    });
+
+    const mainDisplayCanvas = photoTex.image;
+    const miniDisplayCanvas = miniPhotoCanvas;
+
+    const DEFAULT_GALLERY = [
+        '/photos/1.jpg',
+        '/photos/2.jpg',
+        '/photos/3.jpg',
+        '/photos/4.png',
+        '/photos/5.png',
+        '/photos/6.png',
+        '/photos/7.png'
+    ];
+
+    const photoList = [...DEFAULT_GALLERY];
+    if (config.photo && typeof config.photo === 'string' && config.photo.trim()) {
+        const customUrl = config.photo.trim();
+        if (!photoList.includes(customUrl)) {
+            photoList.unshift(customUrl);
+        }
     }
+
+    const photoCanvases = new Map();
+    let currentPhotoIdx = 0;
+    let slideshowTimer = null;
+    let transitionAnimId = null;
+
+    function loadSinglePhoto(url) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.decoding = 'async';
+            img.onload = () => {
+                if (disposed) return resolve(null);
+                const c = coverCrop(img, 512, 640);
+                photoCanvases.set(url, c);
+                resolve(c);
+            };
+            img.onerror = () => {
+                resolve(null);
+            };
+            img.src = url;
+        });
+    }
+
+    function crossFadeTo(fromMain, toMain, fromMini, toMini, duration = 1200) {
+        if (transitionAnimId) {
+            cancelAnimationFrame(transitionAnimId);
+            transitionAnimId = null;
+        }
+
+        const mCtx = mainDisplayCanvas?.getContext('2d');
+        const miCtx = miniDisplayCanvas?.getContext('2d');
+        const startTime = performance.now();
+
+        function stepFrame(now) {
+            if (disposed) return;
+            const elapsed = now - startTime;
+            const linearT = Math.min(1, elapsed / duration);
+            // Smoothstep curve for seamless film dissolve
+            const easeT = linearT * linearT * (3 - 2 * linearT);
+
+            if (mCtx && toMain) {
+                mCtx.clearRect(0, 0, 512, 640);
+                if (fromMain) {
+                    mCtx.globalAlpha = 1;
+                    mCtx.drawImage(fromMain, 0, 0, 512, 640);
+                }
+                mCtx.globalAlpha = easeT;
+                mCtx.drawImage(toMain, 0, 0, 512, 640);
+                mCtx.globalAlpha = 1;
+                photoTex.needsUpdate = true;
+            }
+
+            if (miCtx && toMini) {
+                miCtx.clearRect(0, 0, 512, 640);
+                if (fromMini) {
+                    miCtx.globalAlpha = 1;
+                    miCtx.drawImage(fromMini, 0, 0, 512, 640);
+                }
+                miCtx.globalAlpha = easeT;
+                miCtx.drawImage(toMini, 0, 0, 512, 640);
+                miCtx.globalAlpha = 1;
+                miniPhotoTex.needsUpdate = true;
+            }
+
+            if (linearT < 1) {
+                transitionAnimId = requestAnimationFrame(stepFrame);
+            } else {
+                transitionAnimId = null;
+            }
+        }
+
+        transitionAnimId = requestAnimationFrame(stepFrame);
+    }
+
+    Promise.all(photoList.map(loadSinglePhoto)).then(() => {
+        if (disposed) return;
+        const initialMain = photoCanvases.get(photoList[0]);
+        const initialMini = photoCanvases.get(photoList[1 % photoList.length]);
+
+        // Smooth fade-in to the first photo
+        crossFadeTo(null, initialMain, null, initialMini, 800);
+
+        if (photoList.length > 1) {
+            slideshowTimer = setInterval(() => {
+                if (disposed) return;
+                const fromMain = photoCanvases.get(photoList[currentPhotoIdx]);
+                const fromMini = photoCanvases.get(photoList[(currentPhotoIdx + 1) % photoList.length]);
+
+                currentPhotoIdx = (currentPhotoIdx + 1) % photoList.length;
+
+                const toMain = photoCanvases.get(photoList[currentPhotoIdx]);
+                const toMini = photoCanvases.get(photoList[(currentPhotoIdx + 1) % photoList.length]);
+
+                crossFadeTo(fromMain, toMain, fromMini, toMini, 1200);
+            }, 6000);
+            disposers.push(() => {
+                clearInterval(slideshowTimer);
+                if (transitionAnimId) cancelAnimationFrame(transitionAnimId);
+            });
+        }
+    });
 
     await step(0.37, 'frame');
     const confetti = createConfetti({

@@ -350,6 +350,8 @@
                                     <label class="cr-chip"><input type="radio" name="music" value="happy-birthday-lofi" checked><span data-i18n="crMusicLofi">Warm lo-fi</span></label>
                                     <label class="cr-chip"><input type="radio" name="music" value="happy-birthday-piano"><span data-i18n="crMusicPiano">Piano</span></label>
                                     <label class="cr-chip"><input type="radio" name="music" value="happy-birthday-synth"><span data-i18n="crMusicSynth">Upbeat pop</span></label>
+                                    <label class="cr-chip"><input type="radio" name="music" value="kid"><span data-i18n="crMusicKid">KID</span></label>
+                                    <label class="cr-chip"><input type="radio" name="music" value="bird"><span data-i18n="crMusicBird">BIRD</span></label>
                                 </div>
                             </fieldset>
 
@@ -477,7 +479,7 @@
         <!-- 2. RECEIVER VIEW -->
         <main id="receiver-view" class="view-panel rcv">
             <!-- Language stays reachable before and after opening. -->
-            <div class="rcv-lang">
+            <div class="rcv-lang" hidden>
                 <i class="fa-solid fa-globe" aria-hidden="true"></i>
                 <select id="lang-switcher-receiver" class="rcv-lang-select" aria-label="Language">
                     <option value="th">TH</option>
@@ -536,6 +538,19 @@
                         <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
                         <span class="rcv-hud-label" id="rcv-audio-label"></span>
                     </button>
+                    <div class="rcv-hud-dropdown-wrap">
+                        <button type="button" id="btn-hud-music" class="rcv-hud-btn" title="Change Music" aria-haspopup="listbox">
+                            <i class="fa-solid fa-music" aria-hidden="true"></i>
+                            <span class="rcv-hud-label" id="rcv-music-label">Song ▾</span>
+                        </button>
+                        <select id="select-hud-music" class="rcv-hud-select" aria-label="Change Music">
+                            <option value="happy-birthday-lofi">Warm lo-fi</option>
+                            <option value="happy-birthday-piano">Piano</option>
+                            <option value="happy-birthday-synth">Upbeat pop</option>
+                            <option value="kid">KID</option>
+                            <option value="bird">BIRD</option>
+                        </select>
+                    </div>
                     <button type="button" id="btn-hud-card" class="rcv-hud-btn" hidden>
                         <i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i>
                         <span class="rcv-hud-label" id="rcv-card-label"></span>
@@ -598,7 +613,7 @@
                     </div>
                     <button type="button" id="btn-read-letter" class="rcv-btn rcv-btn-letter" hidden></button>
                     <div class="rcv-end">
-                        <button type="button" id="btn-thanks" class="rcv-btn rcv-btn-gold"></button>
+                        <button type="button" id="btn-thanks" class="rcv-btn rcv-btn-gold" hidden></button>
                         <div class="rcv-end-row">
                             <button type="button" id="btn-replay" class="rcv-end-btn">
                                 <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span id="rcv-replay-label"></span>
@@ -606,7 +621,7 @@
                             <button type="button" id="btn-save-photo" class="rcv-end-btn">
                                 <i class="fa-solid fa-camera" aria-hidden="true"></i><span id="rcv-save-label"></span>
                             </button>
-                            <a href="#/" id="btn-make-own" class="rcv-end-btn">
+                            <a href="#/" id="btn-make-own" class="rcv-end-btn" hidden>
                                 <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span id="rcv-make-label"></span>
                             </a>
                         </div>

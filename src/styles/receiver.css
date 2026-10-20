@@ -64,6 +64,7 @@
 }
 
 /* ---------- Language ---------- */
+.rcv-lang[hidden] { display: none; }
 .rcv-lang {
     position: absolute;
     top: calc(12px + var(--rcv-safe-t));
@@ -320,6 +321,42 @@
 .rcv-hud-btn[hidden] { display: none; }
 .rcv-hud-btn[aria-pressed="false"] { color: var(--rcv-hud-ink-dim); }
 .rcv-hud-label { font-size: 0.66rem; font-weight: 600; line-height: 1.2; }
+.rcv-hud-dropdown-wrap {
+    position: relative;
+    width: 56px;
+    min-height: 56px;
+}
+.rcv-hud-dropdown-wrap .rcv-hud-btn {
+    width: 100%;
+    height: 100%;
+    min-height: 56px;
+}
+.rcv-hud-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 1rem;
+    z-index: 5;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 16px;
+}
+.rcv-hud-select option {
+    background: #18181f;
+    color: #f0f0f5;
+    padding: 8px 12px;
+    font-size: 0.95rem;
+}
+.rcv-hud-dropdown-wrap:focus-within .rcv-hud-btn {
+    border-color: var(--rcv-hud-accent, #ffd700);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+}
+.rcv-hud-dropdown-wrap:hover .rcv-hud-btn {
+    background: var(--rcv-hud-hover);
+}
 
 /* Wish beat */
 .rcv-wish {
@@ -558,6 +595,7 @@
     margin: 8px auto 14px;
     border-radius: 16px;
     box-shadow: 0 8px 20px rgba(58, 30, 42, 0.18);
+    transition: opacity 0.6s ease;
 }
 .rcv-card-photo[hidden] { display: none; }
 .rcv-card-text h2 {
@@ -613,7 +651,8 @@
     gap: 12px;
 }
 .rcv-end .rcv-btn-gold { width: 100%; }
-.rcv-end-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rcv-end-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
+.rcv-end-btn[hidden] { display: none; }
 .rcv-end-btn {
     display: flex;
     flex-direction: column;
